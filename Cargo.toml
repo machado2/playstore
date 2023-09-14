@@ -1,0 +1,20 @@
+[package]
+name = "playstore-crawler"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+futures = "*"
+sea-orm = { version = "*", features = [
+    "sqlx-postgres",
+    "runtime-async-std-native-tls",
+    "macros",
+] }
+dotenvy = "*"
+serde = "*"
+reqwest = { version = "*", features = ["json"] }
+tokio = { version = "*", features = ["full"] }
+chrono = { version = "*", features = ["serde"] }
+serde_json = "*"
+simple-error = "*"
+error-chain = "*"

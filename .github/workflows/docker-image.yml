@@ -1,0 +1,25 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag fbmac/playstorecrawler
+    - uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.USERNAME  }}
+        password: ${{ secrets.PASSWORD }}
+    - name: Push docker image
+      run: docker push fbmac/playstorecrawler
+      
