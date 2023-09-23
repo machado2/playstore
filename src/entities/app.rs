@@ -7,8 +7,8 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
-    #[sea_orm(column_name = "DATA", column_type = "JsonBinary", nullable)]
-    pub data: Option<Json>,
+    #[sea_orm(column_type = "JsonBinary", nullable)]
+    pub appdata: Option<Json>,
     pub last_crawled: Option<DateTime>,
     pub last_updated: Option<DateTime>,
     pub last_similar_search: Option<DateTime>,

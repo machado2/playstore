@@ -24,7 +24,7 @@ impl Repository {
     pub async fn insert_app(&self, id: String) {
         let new_app = app::ActiveModel {
             id: ActiveValue::Set(id.clone()),
-            data: ActiveValue::Set(None),
+            appdata: ActiveValue::Set(None),
             last_crawled: ActiveValue::Set(None),
             last_updated: ActiveValue::Set(None),
             last_similar_search: ActiveValue::Set(None),
@@ -54,7 +54,7 @@ impl Repository {
             .await?
             .ok_or_not_found()?
             .into();
-        app.data = ActiveValue::Set(Some(data));
+        app.appdata = ActiveValue::Set(Some(data));
         app.last_updated = ActiveValue::Set(Some(Utc::now().naive_utc()));
         app.update(&self.db).await.expect("Failed to update app");
         self.insert_developer(dev_id).await;
