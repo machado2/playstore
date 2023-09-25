@@ -3,3 +3,4 @@
 pub use super::app::Entity as App;
 pub use super::category::Entity as Category;
 pub use super::developer::Entity as Developer;
+pub use super::listed_app::Entity as ListedApp;

@@ -7,7 +7,7 @@ edition = "2021"
 futures = "*"
 sea-orm = { version = "*", features = [
     "sqlx-postgres",
-    "runtime-async-std-native-tls",
+    "runtime-tokio-rustls",
     "macros",
 ] }
 dotenvy = "*"

@@ -5,3 +5,4 @@ pub mod prelude;
 pub mod app;
 pub mod category;
 pub mod developer;
+pub mod listed_app;
