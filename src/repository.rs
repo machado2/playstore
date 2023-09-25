@@ -47,9 +47,9 @@ impl Repository {
         _ = Developer::insert(new_developer).exec(&self.db).await;
     }
 
-    pub async fn update_app(&self, id: String, data: JsonValue) -> Result<(), Error> {
+    pub async fn update_app(&self, id: &str, data: JsonValue) -> Result<(), Error> {
         let dev_id = String::from(data["developerId"].as_str().ok_or_invalid()?);
-        let mut app: app::ActiveModel = App::find_by_id(id.clone())
+        let mut app: app::ActiveModel = App::find_by_id(id)
             .one(&self.db)
             .await?
             .ok_or_not_found()?

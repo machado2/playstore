@@ -6,6 +6,7 @@ use std::time::Duration;
 use dotenvy::dotenv;
 use google_play_api::GooglePlayApi;
 use repository::Repository;
+use log::{info, error};
 
 mod entities;
 
@@ -20,6 +21,7 @@ async fn search_category(repo: &Repository, api: &GooglePlayApi) -> Result<(), E
     let category = repo.get_category_for_crawl().await?;
     let apps = api.get_category(&category).await?;
     repo.insert_apps(apps).await;
+    info!("Crawled category {}", category);
     Ok(())
 }
 
@@ -27,6 +29,7 @@ async fn search_similar(repo: &Repository, api: &GooglePlayApi) -> Result<(), Er
     let app_id = repo.get_app_for_similar_search().await?;
     let apps = api.get_similar(&app_id).await?;
     repo.insert_apps(apps).await;
+    info!("Crawled similar apps for {}", app_id);
     Ok(())
 }
 
@@ -34,6 +37,7 @@ async fn search_developer(repo: &Repository, api: &GooglePlayApi) -> Result<(), 
     let dev_id = repo.get_developer_for_crawl().await?;
     let ids = api.get_from_developer(&dev_id).await?;
     repo.insert_apps(ids).await;
+    info!("Crawled developer {}", dev_id);
     Ok(())
 }
 
@@ -51,7 +55,9 @@ async fn update_one_app(repo: &Repository, api: &GooglePlayApi) -> Result<(), Er
     match app_id {
         Ok(id) => {
             let data = api.get_app(&id).await?;
-            repo.update_app(id, data).await
+            let r = repo.update_app(&id, data).await;
+            info!("Crawled app {}", id);
+            r
         }
         Err(e) => Err(e),
     }
@@ -59,12 +65,13 @@ async fn update_one_app(repo: &Repository, api: &GooglePlayApi) -> Result<(), Er
 
 async fn update_loop(repo: &Repository, api: &GooglePlayApi) {
     let mut interval = tokio::time::interval(Duration::from_secs(5));
+    info!("Starting scrape loop");
     loop {
         let _ = interval.tick().await;
         match update_one_app(repo, api).await {
             Ok(_) => {}
             Err(e) => {
-                println!("Failed to update: {}", e);
+                error!("Failed to update: {}", e);
             }
         }
     }
@@ -73,6 +80,7 @@ async fn update_loop(repo: &Repository, api: &GooglePlayApi) {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     _ = dotenv();
+    env_logger::init();
     let api = google_play_api::GooglePlayApi::new();
     let repo = Repository::new().await;
     repo.populate_constants().await;

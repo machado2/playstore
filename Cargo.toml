@@ -18,3 +18,5 @@ chrono = { version = "*", features = ["serde"] }
 serde_json = "*"
 simple-error = "*"
 error-chain = "*"
+env_logger = "0.10.0"
+log = "0.4.20"
