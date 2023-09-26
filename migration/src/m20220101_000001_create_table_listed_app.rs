@@ -27,10 +27,10 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(ListedApp::Score).float().not_null())
                     .col(ColumnDef::new(ListedApp::MinInstalls).integer().not_null())
                     .col(ColumnDef::new(ListedApp::GenreId).string().not_null())
+                    .col(ColumnDef::new(ListedApp::Free).boolean().not_null())
                     .to_owned(),
             )
             .await?;
-
         Ok(())
     }
 
@@ -52,4 +52,5 @@ enum ListedApp {
     Score,
     MinInstalls,
     GenreId,
+    Free,
 }
