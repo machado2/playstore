@@ -8,21 +8,10 @@ error_chain! {
         DbErr(::sea_orm::error::DbErr);
     }
     errors {
-        NotFound
-        InvalidData
+        HttpNotFound {
+            description("Http request returned Not found")
+            display("Http request returned Not found")
+        }
     }
 }
 
-pub trait OkOrError<T> {
-    fn ok_or_not_found(self) -> Result<T>;
-    fn ok_or_invalid(self) -> Result<T>;
-}
-
-impl<T> OkOrError<T> for Option<T> {
-    fn ok_or_not_found(self) -> Result<T> {
-        self.ok_or(Error::from_kind(ErrorKind::NotFound))
-    }
-    fn ok_or_invalid(self) -> Result<T> {
-        self.ok_or(Error::from_kind(ErrorKind::InvalidData))
-    }
-}

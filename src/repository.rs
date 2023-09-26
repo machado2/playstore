@@ -1,8 +1,7 @@
 use crate::{
     constants,
     entities::{prelude::*, *},
-    errors::{Error, OkOrError},
-    errors::ErrorKind,
+    errors::Error,
 };
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
@@ -48,16 +47,19 @@ impl Repository {
     }
 
     pub async fn update_app(&self, id: &str, data: JsonValue) -> Result<(), Error> {
-        let dev_id = String::from(data["developerId"].as_str().ok_or_invalid()?);
+        let dev_id = data["developerId"].as_str().map(String::from);
         let mut app: app::ActiveModel = App::find_by_id(id)
             .one(&self.db)
             .await?
-            .ok_or_not_found()?
+            .ok_or_else(|| format!("App not found when updating {}", id))?
             .into();
         app.appdata = ActiveValue::Set(Some(data));
         app.last_updated = ActiveValue::Set(Some(Utc::now().naive_utc()));
         app.update(&self.db).await.expect("Failed to update app");
-        self.insert_developer(dev_id).await;
+        match dev_id {
+            Some(id) => self.insert_developer(id).await,
+            None => (),
+        }
         Ok(())
     }
 
@@ -66,7 +68,7 @@ impl Repository {
             .filter(category::Column::LastCrawled.is_null())
             .one(&self.db)
             .await?
-            .ok_or(Error::from_kind(ErrorKind::NotFound))?;
+            .ok_or_else(|| "No category left for crawling")?;
         let cat_id = category.id.clone();
         let mut category: category::ActiveModel = category.into();
         category.last_crawled = ActiveValue::Set(Some(Utc::now().naive_utc()));
@@ -79,7 +81,7 @@ impl Repository {
             .filter(app::Column::LastSimilarSearch.is_null())
             .one(&self.db)
             .await?
-            .ok_or(Error::from_kind(ErrorKind::NotFound))?;
+            .ok_or_else(|| "No app left for similar search")?;
         let app_id = app.id.clone();
         let mut app: app::ActiveModel = app.into();
         app.last_similar_search = ActiveValue::Set(Some(Utc::now().naive_utc()));
@@ -92,7 +94,7 @@ impl Repository {
             .filter(app::Column::LastCrawled.is_null())
             .one(&self.db)
             .await?
-            .ok_or(Error::from_kind(ErrorKind::NotFound))?;
+            .ok_or_else(|| "No app left for crawling")?;
         let app_id = app.id.clone();
         let mut app: app::ActiveModel = app.into();
         app.last_crawled = ActiveValue::Set(Some(Utc::now().naive_utc()));
@@ -105,7 +107,7 @@ impl Repository {
             .filter(developer::Column::LastCrawled.is_null())
             .one(&self.db)
             .await?
-            .ok_or_not_found()?;
+            .ok_or_else(|| "No developer left for crawling")?;
         let dev_id = developer.id.clone();
         let mut developer: developer::ActiveModel = developer.into();
         developer.last_crawled = ActiveValue::Set(Some(Utc::now().naive_utc()));

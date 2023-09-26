@@ -1,4 +1,4 @@
-use crate::errors::{Error, ErrorKind, OkOrError, ResultExt};
+use crate::errors::{Error, ErrorKind};
 use serde_json::Value as JsonValue;
 use std::env;
 pub struct GooglePlayApi {
@@ -17,11 +17,10 @@ impl GooglePlayApi {
     async fn get_json(&self, url: &str) -> Result<JsonValue, Error> {
         let response = self.client.get(url).send().await?;
         match response.status() {
-            reqwest::StatusCode::NOT_FOUND => Err(Error::from_kind(ErrorKind::NotFound)),
-            _ => response
+            reqwest::StatusCode::NOT_FOUND => Err(Error::from_kind(ErrorKind::HttpNotFound)),
+            _ => Ok(response
                 .json()
-                .await
-                .chain_err(|| Error::from_kind(ErrorKind::InvalidData)),
+                .await?)
         }
     }
 
@@ -30,7 +29,7 @@ impl GooglePlayApi {
         let json = self.get_json(&url).await?;
         let results = json["results"].as_array();
         let ids = results
-            .ok_or_not_found()?
+            .ok_or_else(|| format!("No results found on category search for {}", category))?
             .iter()
             .filter_map(|x| x["appId"].as_str().map(String::from))
             .collect::<Vec<String>>();
@@ -42,7 +41,7 @@ impl GooglePlayApi {
         let json = self.get_json(&url).await?;
         let results = json["results"].as_array();
         let ids = results
-            .ok_or_not_found()?
+            .ok_or_else(|| format!("No results found on similar search for {}", id))?
             .iter()
             .filter_map(|x| x["appId"].as_str().map(String::from))
             .collect::<Vec<String>>();
@@ -54,7 +53,7 @@ impl GooglePlayApi {
         let json = self.get_json(&url).await?;
         let results = json["apps"].as_array();
         let ids = results
-            .ok_or_not_found()?
+            .ok_or_else(|| format!("No results found on developer search for {}", dev_id))?
             .iter()
             .filter_map(|x| x["appId"].as_str().map(String::from))
             .collect::<Vec<String>>();

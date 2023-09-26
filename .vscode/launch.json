@@ -5,18 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "program": "${workspaceFolder}/backend/target/debug/backend",
+            "program": "${workspaceFolder}/target/debug/playstore-crawler",
             "type": "lldb",
             "request": "launch",
             "name": "Cargo launch",
             "cargo": {
                 "args": [
                     "build",
-                    "--manifest-path=${workspaceFolder}/backend/Cargo.toml"
+                    "--manifest-path=${workspaceFolder}/Cargo.toml"
                 ]
             },
             "args": [],
-            "cwd": "${workspaceFolder}/backend"
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
