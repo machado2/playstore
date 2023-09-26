@@ -7,6 +7,8 @@ use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::*;
 use std::env;
+
+#[derive(Debug, Clone)]
 pub struct Repository {
     db: DatabaseConnection,
 }
@@ -126,4 +128,14 @@ impl Repository {
             }
         }
     }
+
+    pub async fn get_stats(&self) -> Result<StatsResponse, Error> {
+        let count_app = App::find().count(&self.db).await?;
+        Ok(StatsResponse { count: count_app })
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct StatsResponse {
+    count: u64,
 }

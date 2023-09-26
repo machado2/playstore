@@ -53,9 +53,8 @@ async fn update_one_app(repo: &Repository, api: &GooglePlayApi) -> Result<(), Er
     }
 }
 
-pub async fn update_loop() {
+pub async fn update_loop(repo: Repository) {
     let api = google_play_api::GooglePlayApi::new();
-    let repo = Repository::new().await;
     repo.populate_constants().await;
     let mut interval = tokio::time::interval(Duration::from_secs(5));
     info!("Starting scrape loop");
