@@ -10,7 +10,7 @@ use std::env;
 
 #[derive(Debug, Clone)]
 pub struct Repository {
-    db: DatabaseConnection,
+    pub db: DatabaseConnection,
 }
 
 impl Repository {

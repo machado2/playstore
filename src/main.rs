@@ -10,6 +10,7 @@ mod entities;
 mod errors;
 mod google_play_api;
 mod repository;
+mod schema;
 mod webui;
 use std::env;
 
