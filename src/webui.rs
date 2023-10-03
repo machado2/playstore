@@ -1,58 +1,40 @@
 use crate::repository::Repository;
 use crate::schema::*;
-use actix_web;
-use async_graphql;
-use async_graphql_actix_web;
-use env_logger;
-
-
-use actix_web::{
-    error::Error, get, guard, web, App as ActixApp, HttpResponse, HttpServer, Responder, Result,
+use async_graphql::{self, dataloader::DataLoader};
+use async_graphql::{
+    http::{playground_source, GraphQLPlaygroundConfig},
+    EmptyMutation, EmptySubscription, Schema,
 };
-use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
-use async_graphql_actix_web::GraphQL;
-use log::error;
+use sea_orm::DatabaseConnection;
 
-#[derive(Debug, Clone)]
-struct AppState {
-    repo: Repository,
-}
+use async_graphql_poem::GraphQL;
+use poem::{get, handler, listener::TcpListener, web::Html, IntoResponse, Route, Server};
 
 #[derive(Debug, Clone, serde::Serialize)]
 struct StatsResponse {
     count: u64,
 }
 
-async fn stats(data: web::Data<AppState>) -> Result<HttpResponse, Error> {
-    let response = data.repo.get_stats().await.map_err(|e| {
-        error!("Failed to get stats: {}", e);
-        actix_web::error::ErrorInternalServerError(e)
-    })?;
-    Ok(HttpResponse::Ok().json(response))
+#[handler]
+async fn graphql_playground() -> impl IntoResponse {
+    Html(playground_source(GraphQLPlaygroundConfig::new("/")))
 }
 
-async fn index_graphiql() -> Result<HttpResponse> {
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(GraphiQLSource::build().endpoint("/").finish()))
+pub struct OrmDataloader {
+    pub db: DatabaseConnection,
 }
 
 pub async fn run_web_ui(repo: Repository) -> std::io::Result<()> {
-    HttpServer::new(move || {
-        let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
-            .data(repo.db.clone())
-            .finish();
-        let state = AppState { repo: repo.clone() };
-        ActixApp::new()
-            .app_data(web::Data::new(state))
-            .service(
-                web::resource("/")
-                    .guard(guard::Post())
-                    .to(GraphQL::new(schema)),
-            )
-            .service(web::resource("/").guard(guard::Get()).to(index_graphiql))
-    })
-    .bind(("0.0.0.0", 8080))?
-    .run()
-    .await
+    let orm_dataloader: DataLoader<OrmDataloader> = DataLoader::new(
+        OrmDataloader {
+            db: repo.db.clone(),
+        },
+        tokio::spawn,
+    );
+    let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
+        .data(repo.db)
+        .data(orm_dataloader)
+        .finish();
+    let app = Route::new().at("/", get(graphql_playground).post(GraphQL::new(schema)));
+    Server::new(TcpListener::bind(":::8080")).run(app).await
 }

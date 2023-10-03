@@ -20,6 +20,10 @@ simple-error = "*"
 error-chain = "*"
 env_logger = "0.10.0"
 log = "0.4.20"
-actix-web = "4"
-async-graphql="*"
-async-graphql-actix-web="*"
+poem = { version = "1.3.29" }
+async-graphql = { version = "4.0.14", features = ["decimal", "chrono", "dataloader"] }
+async-graphql-poem = { version = "4.0.14" }
+
+[dependencies.seaography]
+version = "*"
+features = ["with-decimal", "with-chrono"]

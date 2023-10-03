@@ -1,10 +1,3 @@
-use async_graphql::Object;
-
-pub(crate) struct QueryRoot;
-
-#[Object]
-impl QueryRoot {
-    async fn hello(&self) -> String {
-        "Hello GraphQL".to_owned()
-    }
-}
+#[derive(Debug, seaography::macros::QueryRoot)]
+#[seaography(entity = "crate::entities::listed_app")]
+pub struct QueryRoot;

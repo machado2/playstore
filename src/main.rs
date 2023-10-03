@@ -3,6 +3,7 @@ extern crate error_chain;
 use crawler::update_loop;
 use dotenvy::dotenv;
 use log::info;
+use sea_orm::prelude::*;
 use webui::run_web_ui;
 mod constants;
 mod crawler;

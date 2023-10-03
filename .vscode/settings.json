@@ -3,6 +3,7 @@
         "./migration/Cargo.toml",
         "./Cargo.toml",
         "./temp/sea-orm/examples/actix_example/Cargo.toml",
-        "./temp/sea-orm/examples/actix_example/api/Cargo.toml"
+        "./temp/sea-orm/examples/actix_example/api/Cargo.toml",
+        "./graphql/Cargo.toml"
     ]
 }
