@@ -3,6 +3,7 @@ extern crate error_chain;
 use crawler::update_loop;
 use dotenvy::dotenv;
 use log::info;
+use sea_orm::prelude::*;
 use webui::run_web_ui;
 mod constants;
 mod crawler;
@@ -10,6 +11,7 @@ mod entities;
 mod errors;
 mod google_play_api;
 mod repository;
+mod schema;
 mod webui;
 use std::env;
 

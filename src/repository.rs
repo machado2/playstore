@@ -10,7 +10,7 @@ use std::env;
 
 #[derive(Debug, Clone)]
 pub struct Repository {
-    db: DatabaseConnection,
+    pub db: DatabaseConnection,
 }
 
 impl Repository {
@@ -50,7 +50,7 @@ impl Repository {
 
     pub async fn update_app(&self, id: &str, data: JsonValue) -> Result<(), Error> {
         let dev_id = data["developerId"].as_str().map(String::from);
-        let mut app: app::ActiveModel = App::find_by_id(id)
+        let mut app: app::ActiveModel = App::find_by_id(id.to_owned())
             .one(&self.db)
             .await?
             .ok_or_else(|| format!("App not found when updating {}", id))?
@@ -58,10 +58,7 @@ impl Repository {
         app.appdata = ActiveValue::Set(Some(data));
         app.last_updated = ActiveValue::Set(Some(Utc::now().naive_utc()));
         app.update(&self.db).await.expect("Failed to update app");
-        match dev_id {
-            Some(id) => self.insert_developer(id).await,
-            None => (),
-        }
+        if let Some(id) = dev_id { self.insert_developer(id).await }
         Ok(())
     }
 
@@ -70,7 +67,7 @@ impl Repository {
             .filter(category::Column::LastCrawled.is_null())
             .one(&self.db)
             .await?
-            .ok_or_else(|| "No category left for crawling")?;
+            .ok_or("No category left for crawling")?;
         let cat_id = category.id.clone();
         let mut category: category::ActiveModel = category.into();
         category.last_crawled = ActiveValue::Set(Some(Utc::now().naive_utc()));
@@ -83,7 +80,7 @@ impl Repository {
             .filter(app::Column::LastSimilarSearch.is_null())
             .one(&self.db)
             .await?
-            .ok_or_else(|| "No app left for similar search")?;
+            .ok_or("No app left for similar search")?;
         let app_id = app.id.clone();
         let mut app: app::ActiveModel = app.into();
         app.last_similar_search = ActiveValue::Set(Some(Utc::now().naive_utc()));
@@ -96,7 +93,7 @@ impl Repository {
             .filter(app::Column::LastCrawled.is_null())
             .one(&self.db)
             .await?
-            .ok_or_else(|| "No app left for crawling")?;
+            .ok_or("No app left for crawling")?;
         let app_id = app.id.clone();
         let mut app: app::ActiveModel = app.into();
         app.last_crawled = ActiveValue::Set(Some(Utc::now().naive_utc()));
@@ -109,7 +106,7 @@ impl Repository {
             .filter(developer::Column::LastCrawled.is_null())
             .one(&self.db)
             .await?
-            .ok_or_else(|| "No developer left for crawling")?;
+            .ok_or("No developer left for crawling")?;
         let dev_id = developer.id.clone();
         let mut developer: developer::ActiveModel = developer.into();
         developer.last_crawled = ActiveValue::Set(Some(Utc::now().naive_utc()));
@@ -127,11 +124,6 @@ impl Repository {
                 _ = Category::insert(new_category).exec(&self.db).await;
             }
         }
-    }
-
-    pub async fn get_stats(&self) -> Result<StatsResponse, Error> {
-        let count_app = App::find().count(&self.db).await?;
-        Ok(StatsResponse { count: count_app })
     }
 }
 

@@ -28,9 +28,30 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(ListedApp::MinInstalls).integer().not_null())
                     .col(ColumnDef::new(ListedApp::GenreId).string().not_null())
                     .col(ColumnDef::new(ListedApp::Free).boolean().not_null())
+                    .col(ColumnDef::new(ListedApp::Details).json_binary().not_null())
                     .to_owned(),
             )
             .await?;
+
+        let sql = r#"
+            insert into listed_app
+            select id,
+                now(),
+                appdata->>'title',
+                (appdata->>'score')::numeric,
+                (appdata->>'minInstalls')::numeric,
+                appdata->>'genreId' as genreId,
+                appdata->>'free' = 'true',
+                appdata
+            from app
+            where 	appdata->>'offersIAP' = 'false'
+                and appdata->>'adSupported' = 'false'
+                and appdata->>'genreId' like 'GAME%'
+                and (appdata->>'score')::numeric >= 3
+        "#;
+
+        manager.get_connection().execute_unprepared(sql).await?;
+
         Ok(())
     }
 
@@ -53,4 +74,5 @@ enum ListedApp {
     MinInstalls,
     GenreId,
     Free,
+    Details,
 }

@@ -1,41 +1,44 @@
 use crate::repository::Repository;
-use actix_web::{get, web, App as ActixApp, HttpResponse, HttpServer, Responder, error::Error};
+use crate::schema::*;
+use async_graphql::{self, dataloader::DataLoader};
+use async_graphql::{
+    http::{playground_source, GraphQLPlaygroundConfig},
+    EmptyMutation, EmptySubscription, Schema,
+};
+use poem::EndpointExt;
+use poem::middleware::Cors;
+use sea_orm::DatabaseConnection;
 
-use log::error;
-
-#[derive(Debug, Clone)]
-struct AppState {
-    repo: Repository,
-}
-
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
+use async_graphql_poem::GraphQL;
+use poem::{get, handler, listener::TcpListener, web::Html, IntoResponse, Route, Server};
 
 #[derive(Debug, Clone, serde::Serialize)]
 struct StatsResponse {
     count: u64,
 }
 
-#[get("/stats")]
-async fn stats(data: web::Data<AppState>) -> Result<HttpResponse, Error> {
-    let response = data.repo.get_stats().await.map_err(|e| {
-        error!("Failed to get stats: {}", e);
-        actix_web::error::ErrorInternalServerError(e)
-    })?;
-    Ok(HttpResponse::Ok().json(response))
+#[handler]
+async fn graphql_playground() -> impl IntoResponse {
+    Html(playground_source(GraphQLPlaygroundConfig::new("/")))
+}
+
+pub struct OrmDataloader {
+    pub db: DatabaseConnection,
 }
 
 pub async fn run_web_ui(repo: Repository) -> std::io::Result<()> {
-    HttpServer::new(move || {
-        let state = AppState { repo: repo.clone() };
-        ActixApp::new()
-            .app_data(web::Data::new(state))
-            .service(hello)
-            .service(stats)
-    })
-    .bind(("0.0.0.0", 8080))?
-    .run()
-    .await
+    let orm_dataloader: DataLoader<OrmDataloader> = DataLoader::new(
+        OrmDataloader {
+            db: repo.db.clone(),
+        },
+        tokio::spawn,
+    );
+    let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
+        .data(repo.db)
+        .data(orm_dataloader)
+        .finish();
+    let app = Route::new()
+        .at("/", get(graphql_playground).post(GraphQL::new(schema)))
+        .with(Cors::new());
+    Server::new(TcpListener::bind(":::8080")).run(app).await
 }

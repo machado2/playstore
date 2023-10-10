@@ -1,0 +1,190 @@
+schema {
+  query: QueryRoot
+}
+
+input BooleanFilter {
+  eq: Boolean
+  ne: Boolean
+  gt: Boolean
+  gte: Boolean
+  lt: Boolean
+  lte: Boolean
+  isIn: [Boolean!]
+  isNotIn: [Boolean!]
+  isNull: Boolean
+}
+
+input CursorInput {
+  cursor: String
+  limit: Int!
+}
+
+input DateTimeFilter {
+  eq: NaiveDateTime
+  ne: NaiveDateTime
+  gt: NaiveDateTime
+  gte: NaiveDateTime
+  lt: NaiveDateTime
+  lte: NaiveDateTime
+  isIn: [NaiveDateTime!]
+  isNotIn: [NaiveDateTime!]
+  isNull: Boolean
+}
+
+input FloatFilter {
+  eq: Float
+  ne: Float
+  gt: Float
+  gte: Float
+  lt: Float
+  lte: Float
+  isIn: [Float!]
+  isNotIn: [Float!]
+  isNull: Boolean
+}
+
+input IntegerFilter {
+  eq: Int
+  ne: Int
+  gt: Int
+  gte: Int
+  lt: Int
+  lte: Int
+  isIn: [Int!]
+  isNotIn: [Int!]
+  isNull: Boolean
+}
+
+# A scalar that can represent any JSON value.
+scalar JSON
+
+input JsonFilter {
+  eq: JSON
+  ne: JSON
+  gt: JSON
+  gte: JSON
+  lt: JSON
+  lte: JSON
+  isIn: [JSON!]
+  isNotIn: [JSON!]
+  isNull: Boolean
+}
+
+type ListedApp {
+  id: String!
+  lastUpdated: NaiveDateTime!
+  title: String!
+  score: Float!
+  minInstalls: Int!
+  genreId: String!
+  free: Boolean!
+  details: JSON!
+}
+
+type ListedAppConnection {
+  # Information to aid in pagination.
+  pageInfo: PageInfo!
+
+  # A list of edges.
+  edges: [ListedAppEdge!]!
+
+  # A list of nodes.
+  nodes: [ListedApp!]!
+  pages: Int
+  current: Int
+}
+
+# An edge in a connection.
+type ListedAppEdge {
+  # A cursor for use in pagination
+  cursor: String!
+
+  # The item at the end of the edge
+  node: ListedApp!
+}
+
+input ListedAppFilter {
+  or: [ListedAppFilter!]
+  and: [ListedAppFilter!]
+  id: StringFilter
+  lastUpdated: DateTimeFilter
+  title: StringFilter
+  score: FloatFilter
+  minInstalls: IntegerFilter
+  genreId: StringFilter
+  free: BooleanFilter
+  details: JsonFilter
+}
+
+input ListedAppOrderBy {
+  id: OrderByEnum
+  lastUpdated: OrderByEnum
+  title: OrderByEnum
+  score: OrderByEnum
+  minInstalls: OrderByEnum
+  genreId: OrderByEnum
+  free: OrderByEnum
+  details: OrderByEnum
+}
+
+# ISO 8601 combined date and time without timezone.
+#
+# # Examples
+#
+# * `2015-07-01T08:59:60.123`,
+scalar NaiveDateTime
+
+enum OrderByEnum {
+  ASC
+  DESC
+}
+
+# Information about pagination in a connection
+type PageInfo {
+  # When paginating backwards, are there more items?
+  hasPreviousPage: Boolean!
+
+  # When paginating forwards, are there more items?
+  hasNextPage: Boolean!
+
+  # When paginating backwards, the cursor to continue.
+  startCursor: String
+
+  # When paginating forwards, the cursor to continue.
+  endCursor: String
+}
+
+input PageInput {
+  limit: Int!
+  page: Int!
+}
+
+input Pagination {
+  pages: PageInput
+  cursor: CursorInput
+}
+
+type QueryRoot {
+  listedApp(
+    filters: ListedAppFilter
+    pagination: Pagination
+    orderBy: ListedAppOrderBy
+  ): ListedAppConnection!
+}
+
+input StringFilter {
+  eq: String
+  ne: String
+  gt: String
+  gte: String
+  lt: String
+  lte: String
+  isIn: [String!]
+  isNotIn: [String!]
+  isNull: Boolean
+  contains: String
+  startsWith: String
+  endsWith: String
+  like: String
+  notLike: String
+}
